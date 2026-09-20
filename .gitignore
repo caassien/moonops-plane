@@ -1,0 +1,8 @@
+_build/
+.mooncakes/
+.repos/
+target/
+
+# Local planning notes are not part of the published project.
+docs/commit-plan.md
+docs/project-plan.md
