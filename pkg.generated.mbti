@@ -6,6 +6,8 @@ import {
 }
 
 // Values
+pub fn compute_diff(DesiredState, ObservedState?) -> DiffResult raise ModelError
+
 pub fn version() -> String
 
 // Errors
@@ -13,6 +15,7 @@ pub(all) suberror ModelError {
   EmptyField(String)
   NegativeReplicas
   NonPositiveGeneration
+  ResourceMismatch
 } derive(Eq, @debug.Debug)
 
 // Types and methods
@@ -37,6 +40,11 @@ pub(all) struct DesiredState {
   generation : Int
 } derive(Eq, @debug.Debug)
 pub fn DesiredState::new(resource~ : ResourceId, spec~ : ResourceSpec, generation~ : Int) -> Self raise ModelError
+
+pub(all) enum DiffResult {
+  NoChange
+  Action(Operation)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct ExecutionResult {
   operation : Operation

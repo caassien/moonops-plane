@@ -4,6 +4,7 @@ pub(all) suberror ModelError {
   EmptyField(String)
   NegativeReplicas
   NonPositiveGeneration
+  ResourceMismatch
 } derive(Debug, Eq)
 
 ///|
