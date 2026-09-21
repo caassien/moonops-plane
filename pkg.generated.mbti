@@ -1,12 +1,97 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "caassien/moonops_plane"
 
+import {
+  "moonbitlang/core/debug",
+}
+
 // Values
 pub fn version() -> String
 
 // Errors
+pub(all) suberror ModelError {
+  EmptyField(String)
+  NegativeReplicas
+  NonPositiveGeneration
+} derive(Eq, @debug.Debug)
 
 // Types and methods
+pub(all) enum ActionKind {
+  Create
+  Update
+  Scale
+  Restart
+  Delete
+} derive(Eq, @debug.Debug)
+
+pub(all) enum ApprovalState {
+  NotRequired
+  Pending
+  Approved
+  Rejected
+} derive(Eq, @debug.Debug)
+
+pub(all) struct DesiredState {
+  resource : ResourceId
+  spec : ResourceSpec
+  generation : Int
+} derive(Eq, @debug.Debug)
+pub fn DesiredState::new(resource~ : ResourceId, spec~ : ResourceSpec, generation~ : Int) -> Self raise ModelError
+
+pub(all) struct ExecutionResult {
+  operation : Operation
+  state : ExecutionState
+  message : String
+} derive(Eq, @debug.Debug)
+pub fn ExecutionResult::new(operation~ : Operation, state~ : ExecutionState, message~ : String) -> Self raise ModelError
+
+pub(all) enum ExecutionState {
+  Succeeded
+  Failed
+  Skipped
+} derive(Eq, @debug.Debug)
+
+pub(all) struct ObservedState {
+  resource : ResourceId
+  spec : ResourceSpec
+  generation : Int
+  healthy : Bool
+} derive(Eq, @debug.Debug)
+pub fn ObservedState::new(resource~ : ResourceId, spec~ : ResourceSpec, generation~ : Int, healthy~ : Bool) -> Self raise ModelError
+
+pub(all) struct Operation {
+  resource : ResourceId
+  action : ActionKind
+  reason : String
+} derive(Eq, @debug.Debug)
+pub fn Operation::new(resource~ : ResourceId, action~ : ActionKind, reason~ : String) -> Self raise ModelError
+
+pub(all) struct Plan {
+  id : PlanId
+  operations : Array[Operation]
+  baseline_generation : Int
+  approval : ApprovalState
+} derive(Eq, @debug.Debug)
+pub fn Plan::new(id~ : PlanId, operations~ : Array[Operation], baseline_generation~ : Int) -> Self raise ModelError
+
+pub(all) struct PlanId {
+  value : String
+} derive(Eq, @debug.Debug)
+pub fn PlanId::new(value~ : String) -> Self raise ModelError
+
+pub(all) struct ResourceId {
+  kind : String
+  name : String
+} derive(Eq, @debug.Debug)
+pub fn ResourceId::new(kind~ : String, name~ : String) -> Self raise ModelError
+
+pub(all) struct ResourceSpec {
+  version : String
+  replicas : Int
+  config_fingerprint : String
+  enabled : Bool
+} derive(Eq, @debug.Debug)
+pub fn ResourceSpec::new(version~ : String, replicas~ : Int, config_fingerprint~ : String, enabled~ : Bool) -> Self raise ModelError
 
 // Type aliases
 
