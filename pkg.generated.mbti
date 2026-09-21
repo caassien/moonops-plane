@@ -8,6 +8,8 @@ import {
 // Values
 pub fn compute_diff(DesiredState, ObservedState?) -> DiffResult raise ModelError
 
+pub fn validate_resource_dependencies(Array[ResourceId], Array[(ResourceId, ResourceId)]) -> Unit raise ModelError
+
 pub fn version() -> String
 
 // Errors
@@ -16,6 +18,8 @@ pub(all) suberror ModelError {
   NegativeReplicas
   NonPositiveGeneration
   ResourceMismatch
+  InvalidDependency(String)
+  DependencyCycle(String)
 } derive(Eq, @debug.Debug)
 
 // Types and methods

@@ -5,6 +5,8 @@ pub(all) suberror ModelError {
   NegativeReplicas
   NonPositiveGeneration
   ResourceMismatch
+  InvalidDependency(String)
+  DependencyCycle(String)
 } derive(Debug, Eq)
 
 ///|

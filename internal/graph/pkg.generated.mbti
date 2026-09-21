@@ -1,0 +1,25 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "caassien/moonops_plane/internal/graph"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn validate(Array[String], Array[(String, String)]) -> Unit raise GraphError
+
+// Errors
+pub(all) suberror GraphError {
+  EmptyNode(String)
+  DuplicateNode(String)
+  MissingNode(String)
+  SelfDependency(String)
+  DuplicateDependency(String, String)
+  Cycle(String)
+} derive(Eq, @debug.Debug)
+
+// Types and methods
+
+// Type aliases
+
+// Traits
