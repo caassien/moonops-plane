@@ -6,6 +6,8 @@ import {
 }
 
 // Values
+pub fn build_ordered_plan(id~ : PlanId, operations~ : Array[Operation], dependencies~ : Array[(ResourceId, ResourceId)], baseline_generation~ : Int) -> Plan raise ModelError
+
 pub fn compute_diff(DesiredState, ObservedState?) -> DiffResult raise ModelError
 
 pub fn validate_resource_dependencies(Array[ResourceId], Array[(ResourceId, ResourceId)]) -> Unit raise ModelError
@@ -20,6 +22,7 @@ pub(all) suberror ModelError {
   ResourceMismatch
   InvalidDependency(String)
   DependencyCycle(String)
+  DuplicateOperation(String)
 } derive(Eq, @debug.Debug)
 
 // Types and methods

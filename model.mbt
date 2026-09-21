@@ -7,6 +7,7 @@ pub(all) suberror ModelError {
   ResourceMismatch
   InvalidDependency(String)
   DependencyCycle(String)
+  DuplicateOperation(String)
 } derive(Debug, Eq)
 
 ///|
