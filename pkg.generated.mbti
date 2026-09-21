@@ -6,6 +6,8 @@ import {
 }
 
 // Values
+pub fn batch_plan(Plan, ChangeBudget) -> BatchedPlan raise ModelError
+
 pub fn build_ordered_plan(id~ : PlanId, operations~ : Array[Operation], dependencies~ : Array[(ResourceId, ResourceId)], baseline_generation~ : Int) -> Plan raise ModelError
 
 pub fn compute_diff(DesiredState, ObservedState?) -> DiffResult raise ModelError
@@ -23,6 +25,7 @@ pub(all) suberror ModelError {
   InvalidDependency(String)
   DependencyCycle(String)
   DuplicateOperation(String)
+  InvalidBudget(String)
 } derive(Eq, @debug.Debug)
 
 // Types and methods
@@ -40,6 +43,22 @@ pub(all) enum ApprovalState {
   Approved
   Rejected
 } derive(Eq, @debug.Debug)
+
+pub(all) struct BatchedPlan {
+  plan : Plan
+  batches : Array[ChangeBatch]
+} derive(Eq, @debug.Debug)
+
+pub(all) struct ChangeBatch {
+  operations : Array[Operation]
+} derive(Eq, @debug.Debug)
+
+pub(all) struct ChangeBudget {
+  max_parallel : Int
+  max_affected_resources : Int
+  isolate_high_risk : Bool
+} derive(Eq, @debug.Debug)
+pub fn ChangeBudget::new(max_parallel~ : Int, max_affected_resources~ : Int, isolate_high_risk~ : Bool) -> Self raise ModelError
 
 pub(all) struct DesiredState {
   resource : ResourceId
