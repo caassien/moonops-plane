@@ -26,6 +26,8 @@ pub fn evaluate_safety_policy(ChangeBatch, SafetyPolicy) -> PolicyEvaluation rai
 
 pub fn reject_reconciliation(Reconciliation) -> Reconciliation raise ModelError
 
+pub fn replay_audit_events(BatchedPlan, Array[AuditEvent]) -> Reconciliation raise ModelError
+
 pub fn start_reconciliation(BatchedPlan, observed_generation~ : Int) -> Reconciliation raise ModelError
 
 pub fn terminate_reconciliation(Reconciliation) -> Reconciliation raise ModelError
@@ -53,6 +55,7 @@ pub(all) suberror ModelError {
   StaleObservation(String)
   StalePlan(String)
   PlanMismatch(String)
+  InvalidAudit(String)
 } derive(Eq, @debug.Debug)
 
 // Types and methods
@@ -70,6 +73,51 @@ pub(all) enum ApprovalState {
   Pending
   Approved
   Rejected
+} derive(Eq, @debug.Debug)
+
+pub(all) struct AuditEvent {
+  sequence : Int
+  plan_id : PlanId
+  kind : AuditEventKind
+  reason_code : AuditReasonCode
+  state : ReconciliationState
+  batch_index : Int?
+  operation : AuditOperation?
+  policy_decision : PolicyDecision?
+  risk : RiskLevel?
+  explanation : String?
+  execution_state : ExecutionState?
+} derive(Eq, @debug.Debug)
+pub fn AuditEvent::new(sequence~ : Int, plan_id~ : PlanId, kind~ : AuditEventKind, reason_code~ : AuditReasonCode, state~ : ReconciliationState, batch_index~ : Int?, operation~ : AuditOperation?, policy_decision~ : PolicyDecision?, risk~ : RiskLevel?, explanation~ : String?, execution_state~ : ExecutionState?) -> Self raise ModelError
+
+pub(all) enum AuditEventKind {
+  PlanCreated
+  PolicyDecision
+  Approval
+  StateTransition
+  ExecutionFeedback
+  Terminal
+} derive(Eq, @debug.Debug)
+
+pub(all) struct AuditOperation {
+  resource : ResourceId
+  action : ActionKind
+} derive(Eq, @debug.Debug)
+
+pub(all) enum AuditReasonCode {
+  PlanCreated
+  Ready
+  Executing
+  Policy(PolicyReasonCode)
+  ApprovalRequested
+  ApprovalGranted
+  ApprovalRejected
+  FeedbackSucceeded
+  FeedbackFailed
+  FeedbackSkipped
+  ReconciliationSucceeded
+  ReconciliationFailed
+  ReconciliationTerminated
 } derive(Eq, @debug.Debug)
 
 pub(all) struct BatchedPlan {
@@ -170,6 +218,7 @@ pub(all) struct Reconciliation {
   plan : BatchedPlan
   state : ReconciliationState
   observed_generation : Int
+  audit_events : Array[AuditEvent]
   decisions : Array[PolicyEvaluation]
   next_operation : Int
   results : Array[ExecutionResult]

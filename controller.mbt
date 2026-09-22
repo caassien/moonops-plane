@@ -16,6 +16,7 @@ pub(all) struct Reconciliation {
   plan : BatchedPlan
   state : ReconciliationState
   observed_generation : Int
+  audit_events : Array[AuditEvent]
   decisions : Array[PolicyEvaluation]
   next_operation : Int
   results : Array[ExecutionResult]
@@ -28,10 +29,25 @@ pub fn start_reconciliation(
   observed_generation~ : Int,
 ) -> Reconciliation raise ModelError {
   validate_plan_freshness(plan.plan, observed_generation~)
+  let audit_events : Array[AuditEvent] = []
+  audit_append(
+    audit_events,
+    plan_id=plan.plan.id,
+    kind=AuditEventKind::PlanCreated,
+    reason_code=AuditReasonCode::PlanCreated,
+    state=ReconciliationState::Planning,
+    batch_index=None,
+    operation=None,
+    policy_decision=None,
+    risk=None,
+    explanation=None,
+    execution_state=None,
+  )
   {
     plan,
     state: ReconciliationState::Planning,
     observed_generation,
+    audit_events,
     decisions: [],
     next_operation: 0,
     results: [],
@@ -76,6 +92,7 @@ fn controller_set_state(
     plan: controller_with_approval(reconciliation.plan, approval),
     state,
     observed_generation: reconciliation.observed_generation,
+    audit_events: reconciliation.audit_events,
     decisions: reconciliation.decisions,
     next_operation: reconciliation.next_operation,
     results: reconciliation.results,
@@ -93,6 +110,7 @@ fn controller_set_evaluation(
     plan: controller_with_approval(reconciliation.plan, approval),
     state,
     observed_generation: reconciliation.observed_generation,
+    audit_events: reconciliation.audit_events,
     decisions,
     next_operation: reconciliation.next_operation,
     results: reconciliation.results,
@@ -122,28 +140,80 @@ pub fn evaluate_reconciliation(
       PolicyDecision::Allow => ()
     }
   }
-  if denied {
-    controller_set_evaluation(
-      reconciliation,
-      ReconciliationState::Failed,
-      ApprovalState::Rejected,
-      decisions,
-    )
+  let state = if denied {
+    ReconciliationState::Failed
   } else if approval_required {
-    controller_set_evaluation(
-      reconciliation,
-      ReconciliationState::AwaitingApproval,
-      ApprovalState::Pending,
-      decisions,
-    )
+    ReconciliationState::AwaitingApproval
   } else {
-    controller_set_evaluation(
-      reconciliation,
-      ReconciliationState::Ready,
-      ApprovalState::NotRequired,
-      decisions,
+    ReconciliationState::Ready
+  }
+  let approval = if denied {
+    ApprovalState::Rejected
+  } else if approval_required {
+    ApprovalState::Pending
+  } else {
+    ApprovalState::NotRequired
+  }
+  for index, decision in decisions {
+    audit_append(
+      reconciliation.audit_events,
+      plan_id=reconciliation.plan.plan.id,
+      kind=AuditEventKind::PolicyDecision,
+      reason_code=AuditReasonCode::Policy(decision.reason_code),
+      state~,
+      batch_index=Some(index),
+      operation=None,
+      policy_decision=Some(decision.decision),
+      risk=Some(decision.risk),
+      explanation=Some(decision.explanation),
+      execution_state=None,
     )
   }
+  if decisions.length() == 0 {
+    audit_append(
+      reconciliation.audit_events,
+      plan_id=reconciliation.plan.plan.id,
+      kind=AuditEventKind::StateTransition,
+      reason_code=AuditReasonCode::Ready,
+      state=ReconciliationState::Ready,
+      batch_index=None,
+      operation=None,
+      policy_decision=None,
+      risk=None,
+      explanation=None,
+      execution_state=None,
+    )
+  }
+  if state == ReconciliationState::AwaitingApproval {
+    audit_append(
+      reconciliation.audit_events,
+      plan_id=reconciliation.plan.plan.id,
+      kind=AuditEventKind::Approval,
+      reason_code=AuditReasonCode::ApprovalRequested,
+      state~,
+      batch_index=None,
+      operation=None,
+      policy_decision=None,
+      risk=None,
+      explanation=None,
+      execution_state=None,
+    )
+  } else if state == ReconciliationState::Failed {
+    audit_append(
+      reconciliation.audit_events,
+      plan_id=reconciliation.plan.plan.id,
+      kind=AuditEventKind::Terminal,
+      reason_code=AuditReasonCode::ReconciliationFailed,
+      state~,
+      batch_index=None,
+      operation=None,
+      policy_decision=None,
+      risk=None,
+      explanation=None,
+      execution_state=None,
+    )
+  }
+  controller_set_evaluation(reconciliation, state, approval, decisions)
 }
 
 ///|
@@ -156,6 +226,19 @@ pub fn approve_reconciliation(
       "cannot approve from \{controller_state_name(reconciliation.state)}",
     )
   }
+  audit_append(
+    reconciliation.audit_events,
+    plan_id=reconciliation.plan.plan.id,
+    kind=AuditEventKind::Approval,
+    reason_code=AuditReasonCode::ApprovalGranted,
+    state=ReconciliationState::Ready,
+    batch_index=None,
+    operation=None,
+    policy_decision=None,
+    risk=None,
+    explanation=None,
+    execution_state=None,
+  )
   controller_set_state(
     reconciliation,
     ReconciliationState::Ready,
@@ -173,6 +256,32 @@ pub fn reject_reconciliation(
       "cannot reject from \{controller_state_name(reconciliation.state)}",
     )
   }
+  audit_append(
+    reconciliation.audit_events,
+    plan_id=reconciliation.plan.plan.id,
+    kind=AuditEventKind::Approval,
+    reason_code=AuditReasonCode::ApprovalRejected,
+    state=ReconciliationState::Terminated,
+    batch_index=None,
+    operation=None,
+    policy_decision=None,
+    risk=None,
+    explanation=None,
+    execution_state=None,
+  )
+  audit_append(
+    reconciliation.audit_events,
+    plan_id=reconciliation.plan.plan.id,
+    kind=AuditEventKind::Terminal,
+    reason_code=AuditReasonCode::ReconciliationTerminated,
+    state=ReconciliationState::Terminated,
+    batch_index=None,
+    operation=None,
+    policy_decision=None,
+    risk=None,
+    explanation=None,
+    execution_state=None,
+  )
   controller_set_state(
     reconciliation,
     ReconciliationState::Terminated,
@@ -231,12 +340,38 @@ pub fn begin_execution(
   }
   validate_plan_freshness(reconciliation.plan.plan, observed_generation~)
   if controller_total_operations(reconciliation.plan) == 0 {
+    audit_append(
+      reconciliation.audit_events,
+      plan_id=reconciliation.plan.plan.id,
+      kind=AuditEventKind::Terminal,
+      reason_code=AuditReasonCode::ReconciliationSucceeded,
+      state=ReconciliationState::Succeeded,
+      batch_index=None,
+      operation=None,
+      policy_decision=None,
+      risk=None,
+      explanation=None,
+      execution_state=None,
+    )
     controller_set_state(
       reconciliation,
       ReconciliationState::Succeeded,
       reconciliation.plan.plan.approval,
     )
   } else {
+    audit_append(
+      reconciliation.audit_events,
+      plan_id=reconciliation.plan.plan.id,
+      kind=AuditEventKind::StateTransition,
+      reason_code=AuditReasonCode::Executing,
+      state=ReconciliationState::Executing,
+      batch_index=None,
+      operation=None,
+      policy_decision=None,
+      risk=None,
+      explanation=None,
+      execution_state=None,
+    )
     controller_set_state(
       reconciliation,
       ReconciliationState::Executing,
@@ -271,33 +406,75 @@ pub fn apply_execution_result(
     )
   }
   reconciliation.results.push(result)
-  match result.state {
-    ExecutionState::Succeeded => {
-      let next_operation = reconciliation.next_operation + 1
-      let state = if next_operation ==
-        controller_total_operations(reconciliation.plan) {
-        ReconciliationState::Succeeded
-      } else {
-        ReconciliationState::Executing
-      }
-      {
-        plan: reconciliation.plan,
-        state,
-        observed_generation: reconciliation.observed_generation,
-        decisions: reconciliation.decisions,
-        next_operation,
-        results: reconciliation.results,
-      }
+  let next_operation = if result.state == ExecutionState::Succeeded {
+    reconciliation.next_operation + 1
+  } else {
+    reconciliation.next_operation
+  }
+  let state = if result.state == ExecutionState::Succeeded {
+    if next_operation == controller_total_operations(reconciliation.plan) {
+      ReconciliationState::Succeeded
+    } else {
+      ReconciliationState::Executing
     }
-    ExecutionState::Failed | ExecutionState::Skipped =>
-      {
-        plan: reconciliation.plan,
-        state: ReconciliationState::Failed,
-        observed_generation: reconciliation.observed_generation,
-        decisions: reconciliation.decisions,
-        next_operation: reconciliation.next_operation,
-        results: reconciliation.results,
-      }
+  } else {
+    ReconciliationState::Failed
+  }
+  let reason_code = match result.state {
+    ExecutionState::Succeeded => AuditReasonCode::FeedbackSucceeded
+    ExecutionState::Failed => AuditReasonCode::FeedbackFailed
+    ExecutionState::Skipped => AuditReasonCode::FeedbackSkipped
+  }
+  audit_append(
+    reconciliation.audit_events,
+    plan_id=reconciliation.plan.plan.id,
+    kind=AuditEventKind::ExecutionFeedback,
+    reason_code~,
+    state~,
+    batch_index=None,
+    operation=Some(audit_operation(result.operation)),
+    policy_decision=None,
+    risk=None,
+    explanation=None,
+    execution_state=Some(result.state),
+  )
+  if state == ReconciliationState::Succeeded {
+    audit_append(
+      reconciliation.audit_events,
+      plan_id=reconciliation.plan.plan.id,
+      kind=AuditEventKind::Terminal,
+      reason_code=AuditReasonCode::ReconciliationSucceeded,
+      state~,
+      batch_index=None,
+      operation=None,
+      policy_decision=None,
+      risk=None,
+      explanation=None,
+      execution_state=None,
+    )
+  } else if state == ReconciliationState::Failed {
+    audit_append(
+      reconciliation.audit_events,
+      plan_id=reconciliation.plan.plan.id,
+      kind=AuditEventKind::Terminal,
+      reason_code=AuditReasonCode::ReconciliationFailed,
+      state~,
+      batch_index=None,
+      operation=None,
+      policy_decision=None,
+      risk=None,
+      explanation=None,
+      execution_state=None,
+    )
+  }
+  {
+    plan: reconciliation.plan,
+    state,
+    observed_generation: reconciliation.observed_generation,
+    audit_events: reconciliation.audit_events,
+    decisions: reconciliation.decisions,
+    next_operation,
+    results: reconciliation.results,
   }
 }
 
@@ -313,11 +490,25 @@ pub fn terminate_reconciliation(
       raise ModelError::InvalidTransition(
         "cannot terminate a terminal reconciliation",
       )
-    _ =>
+    _ => {
+      audit_append(
+        reconciliation.audit_events,
+        plan_id=reconciliation.plan.plan.id,
+        kind=AuditEventKind::Terminal,
+        reason_code=AuditReasonCode::ReconciliationTerminated,
+        state=ReconciliationState::Terminated,
+        batch_index=None,
+        operation=None,
+        policy_decision=None,
+        risk=None,
+        explanation=None,
+        execution_state=None,
+      )
       controller_set_state(
         reconciliation,
         ReconciliationState::Terminated,
         ApprovalState::Rejected,
       )
+    }
   }
 }

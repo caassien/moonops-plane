@@ -14,6 +14,7 @@ pub(all) suberror ModelError {
   StaleObservation(String)
   StalePlan(String)
   PlanMismatch(String)
+  InvalidAudit(String)
 } derive(Debug, Eq)
 
 ///|
