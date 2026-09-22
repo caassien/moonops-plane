@@ -15,17 +15,23 @@ pub(all) enum ReconciliationState {
 pub(all) struct Reconciliation {
   plan : BatchedPlan
   state : ReconciliationState
+  observed_generation : Int
   decisions : Array[PolicyEvaluation]
   next_operation : Int
   results : Array[ExecutionResult]
 } derive(Debug, Eq)
 
 ///|
-/// Starts a reconciliation before policy evaluation or execution.
-pub fn start_reconciliation(plan : BatchedPlan) -> Reconciliation {
+/// Starts a reconciliation after validating its observed generation.
+pub fn start_reconciliation(
+  plan : BatchedPlan,
+  observed_generation~ : Int,
+) -> Reconciliation raise ModelError {
+  validate_plan_freshness(plan.plan, observed_generation~)
   {
     plan,
     state: ReconciliationState::Planning,
+    observed_generation,
     decisions: [],
     next_operation: 0,
     results: [],
@@ -69,6 +75,7 @@ fn controller_set_state(
   {
     plan: controller_with_approval(reconciliation.plan, approval),
     state,
+    observed_generation: reconciliation.observed_generation,
     decisions: reconciliation.decisions,
     next_operation: reconciliation.next_operation,
     results: reconciliation.results,
@@ -85,6 +92,7 @@ fn controller_set_evaluation(
   {
     plan: controller_with_approval(reconciliation.plan, approval),
     state,
+    observed_generation: reconciliation.observed_generation,
     decisions,
     next_operation: reconciliation.next_operation,
     results: reconciliation.results,
@@ -211,15 +219,17 @@ fn controller_has_feedback(
 }
 
 ///|
-/// Moves a ready run into execution without performing side effects.
+/// Moves a ready run into execution after rechecking observation freshness.
 pub fn begin_execution(
   reconciliation : Reconciliation,
+  observed_generation~ : Int,
 ) -> Reconciliation raise ModelError {
   if reconciliation.state != ReconciliationState::Ready {
     raise ModelError::InvalidTransition(
       "cannot begin execution from \{controller_state_name(reconciliation.state)}",
     )
   }
+  validate_plan_freshness(reconciliation.plan.plan, observed_generation~)
   if controller_total_operations(reconciliation.plan) == 0 {
     controller_set_state(
       reconciliation,
@@ -246,6 +256,7 @@ pub fn apply_execution_result(
       "cannot apply feedback from \{controller_state_name(reconciliation.state)}",
     )
   }
+  validate_feedback_plan(reconciliation.plan.plan, result)
   if controller_has_feedback(reconciliation.results, result.operation) {
     raise ModelError::DuplicateFeedback(resource_key(result.operation.resource))
   }
@@ -272,6 +283,7 @@ pub fn apply_execution_result(
       {
         plan: reconciliation.plan,
         state,
+        observed_generation: reconciliation.observed_generation,
         decisions: reconciliation.decisions,
         next_operation,
         results: reconciliation.results,
@@ -281,6 +293,7 @@ pub fn apply_execution_result(
       {
         plan: reconciliation.plan,
         state: ReconciliationState::Failed,
+        observed_generation: reconciliation.observed_generation,
         decisions: reconciliation.decisions,
         next_operation: reconciliation.next_operation,
         results: reconciliation.results,

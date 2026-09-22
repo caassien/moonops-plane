@@ -38,6 +38,18 @@ fn controller_batched_plan(
 }
 
 ///|
+fn controller_start(plan : BatchedPlan) -> Reconciliation raise ModelError {
+  start_reconciliation(plan, observed_generation=1)
+}
+
+///|
+fn controller_begin(
+  reconciliation : Reconciliation,
+) -> Reconciliation raise ModelError {
+  begin_execution(reconciliation, observed_generation=1)
+}
+
+///|
 fn controller_policy() -> SafetyPolicy raise ModelError {
   SafetyPolicy::new(
     critical_resources=[],
@@ -52,19 +64,20 @@ fn controller_execution_result(
   state : ExecutionState,
   message : String,
 ) -> ExecutionResult raise ModelError {
-  ExecutionResult::new(operation~, state~, message~)
+  let plan_id = PlanId::new(value="controller-plan")
+  ExecutionResult::new(plan_id~, operation~, state~, message~)
 }
 
 ///|
 test "fully allowed reconciliation reaches success" {
   let api = try! controller_resource(kind="service", name="api")
   let operation = try! controller_operation(api, ActionKind::Update)
-  let started = start_reconciliation(try! controller_batched_plan([operation]))
+  let started = try! controller_start(try! controller_batched_plan([operation]))
   assert_eq(started.state, ReconciliationState::Planning)
   let ready = try! evaluate_reconciliation(started, try! controller_policy())
   assert_eq(ready.state, ReconciliationState::Ready)
   assert_eq(ready.plan.plan.approval, ApprovalState::NotRequired)
-  let executing = try! begin_execution(ready)
+  let executing = try! controller_begin(ready)
   assert_eq(executing.state, ReconciliationState::Executing)
   let succeeded = try! apply_execution_result(
     executing,
@@ -83,7 +96,7 @@ test "approval is required and can make a run ready" {
   let api = try! controller_resource(kind="service", name="api")
   let operation = try! controller_operation(api, ActionKind::Restart)
   let waiting = try! evaluate_reconciliation(
-    start_reconciliation(try! controller_batched_plan([operation])),
+    try! controller_start(try! controller_batched_plan([operation])),
     try! controller_policy(),
   )
   assert_eq(waiting.state, ReconciliationState::AwaitingApproval)
@@ -98,13 +111,13 @@ test "approval rejection terminates the run" {
   let api = try! controller_resource(kind="service", name="api")
   let operation = try! controller_operation(api, ActionKind::Delete)
   let waiting = try! evaluate_reconciliation(
-    start_reconciliation(try! controller_batched_plan([operation])),
+    try! controller_start(try! controller_batched_plan([operation])),
     try! controller_policy(),
   )
   let terminated = try! reject_reconciliation(waiting)
   assert_eq(terminated.state, ReconciliationState::Terminated)
   assert_eq(terminated.plan.plan.approval, ApprovalState::Rejected)
-  try begin_execution(terminated) catch {
+  try controller_begin(terminated) catch {
     ModelError::InvalidTransition(message) =>
       inspect(message, content="cannot begin execution from terminated")
     _ => fail("wrong terminal transition error")
@@ -120,10 +133,10 @@ test "partial execution failure stops later operations" {
   let first = try! controller_operation(api, ActionKind::Update)
   let second = try! controller_operation(worker, ActionKind::Scale)
   let ready = try! evaluate_reconciliation(
-    start_reconciliation(try! controller_batched_plan([first, second])),
+    try! controller_start(try! controller_batched_plan([first, second])),
     try! controller_policy(),
   )
-  let executing = try! begin_execution(ready)
+  let executing = try! controller_begin(ready)
   let running = try! apply_execution_result(
     executing,
     try! controller_execution_result(
@@ -152,10 +165,10 @@ test "duplicate feedback is rejected while execution continues" {
   let first = try! controller_operation(api, ActionKind::Update)
   let second = try! controller_operation(worker, ActionKind::Scale)
   let ready = try! evaluate_reconciliation(
-    start_reconciliation(try! controller_batched_plan([first, second])),
+    try! controller_start(try! controller_batched_plan([first, second])),
     try! controller_policy(),
   )
-  let executing = try! begin_execution(ready)
+  let executing = try! controller_begin(ready)
   let running = try! apply_execution_result(
     executing,
     try! controller_execution_result(
@@ -188,7 +201,7 @@ test "denied policy produces a failed terminal run" {
   let api = try! controller_resource(kind="service", name="api")
   let operation = try! controller_operation(api, ActionKind::Unknown)
   let result = try! evaluate_reconciliation(
-    start_reconciliation(try! controller_batched_plan([operation])),
+    try! controller_start(try! controller_batched_plan([operation])),
     try! controller_policy(),
   )
   assert_eq(result.state, ReconciliationState::Failed)
@@ -201,18 +214,18 @@ test "terminal states reject further transitions" {
   let api = try! controller_resource(kind="service", name="api")
   let operation = try! controller_operation(api, ActionKind::Create)
   let ready = try! evaluate_reconciliation(
-    start_reconciliation(try! controller_batched_plan([operation])),
+    try! controller_start(try! controller_batched_plan([operation])),
     try! controller_policy(),
   )
   let succeeded = try! apply_execution_result(
-    try! begin_execution(ready),
+    try! controller_begin(ready),
     try! controller_execution_result(
       operation,
       ExecutionState::Succeeded,
       "created",
     ),
   )
-  try begin_execution(succeeded) catch {
+  try controller_begin(succeeded) catch {
     ModelError::InvalidTransition(message) =>
       inspect(message, content="cannot begin execution from succeeded")
     _ => fail("wrong terminal state error")
@@ -233,10 +246,10 @@ test "explicit termination stops a running reconciliation" {
   let api = try! controller_resource(kind="service", name="api")
   let operation = try! controller_operation(api, ActionKind::Create)
   let ready = try! evaluate_reconciliation(
-    start_reconciliation(try! controller_batched_plan([operation])),
+    try! controller_start(try! controller_batched_plan([operation])),
     try! controller_policy(),
   )
-  let executing = try! begin_execution(ready)
+  let executing = try! controller_begin(ready)
   let terminated = try! terminate_reconciliation(executing)
   assert_eq(terminated.state, ReconciliationState::Terminated)
   assert_eq(terminated.plan.plan.approval, ApprovalState::Rejected)

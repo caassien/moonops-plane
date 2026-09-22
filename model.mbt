@@ -11,6 +11,9 @@ pub(all) suberror ModelError {
   InvalidBudget(String)
   InvalidTransition(String)
   DuplicateFeedback(String)
+  StaleObservation(String)
+  StalePlan(String)
+  PlanMismatch(String)
 } derive(Debug, Eq)
 
 ///|
@@ -197,6 +200,7 @@ pub(all) enum ExecutionState {
 ///|
 /// Feedback returned by an execution adapter.
 pub(all) struct ExecutionResult {
+  plan_id : PlanId
   operation : Operation
   state : ExecutionState
   message : String
@@ -205,6 +209,7 @@ pub(all) struct ExecutionResult {
 ///|
 /// Creates an execution result with a non-empty message.
 pub fn ExecutionResult::new(
+  plan_id~ : PlanId,
   operation~ : Operation,
   state~ : ExecutionState,
   message~ : String,
@@ -212,5 +217,5 @@ pub fn ExecutionResult::new(
   if message == "" {
     raise ModelError::EmptyField("message")
   }
-  { operation, state, message, }
+  { plan_id, operation, state, message, }
 }

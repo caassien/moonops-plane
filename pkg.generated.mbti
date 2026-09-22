@@ -12,7 +12,7 @@ pub fn approve_reconciliation(Reconciliation) -> Reconciliation raise ModelError
 
 pub fn batch_plan(Plan, ChangeBudget) -> BatchedPlan raise ModelError
 
-pub fn begin_execution(Reconciliation) -> Reconciliation raise ModelError
+pub fn begin_execution(Reconciliation, observed_generation~ : Int) -> Reconciliation raise ModelError
 
 pub fn build_ordered_plan(id~ : PlanId, operations~ : Array[Operation], dependencies~ : Array[(ResourceId, ResourceId)], baseline_generation~ : Int) -> Plan raise ModelError
 
@@ -26,9 +26,13 @@ pub fn evaluate_safety_policy(ChangeBatch, SafetyPolicy) -> PolicyEvaluation rai
 
 pub fn reject_reconciliation(Reconciliation) -> Reconciliation raise ModelError
 
-pub fn start_reconciliation(BatchedPlan) -> Reconciliation
+pub fn start_reconciliation(BatchedPlan, observed_generation~ : Int) -> Reconciliation raise ModelError
 
 pub fn terminate_reconciliation(Reconciliation) -> Reconciliation raise ModelError
+
+pub fn validate_feedback_plan(Plan, ExecutionResult) -> Unit raise ModelError
+
+pub fn validate_plan_freshness(Plan, observed_generation~ : Int) -> Unit raise ModelError
 
 pub fn validate_resource_dependencies(Array[ResourceId], Array[(ResourceId, ResourceId)]) -> Unit raise ModelError
 
@@ -46,6 +50,9 @@ pub(all) suberror ModelError {
   InvalidBudget(String)
   InvalidTransition(String)
   DuplicateFeedback(String)
+  StaleObservation(String)
+  StalePlan(String)
+  PlanMismatch(String)
 } derive(Eq, @debug.Debug)
 
 // Types and methods
@@ -94,11 +101,12 @@ pub(all) enum DiffResult {
 } derive(Eq, @debug.Debug)
 
 pub(all) struct ExecutionResult {
+  plan_id : PlanId
   operation : Operation
   state : ExecutionState
   message : String
 } derive(Eq, @debug.Debug)
-pub fn ExecutionResult::new(operation~ : Operation, state~ : ExecutionState, message~ : String) -> Self raise ModelError
+pub fn ExecutionResult::new(plan_id~ : PlanId, operation~ : Operation, state~ : ExecutionState, message~ : String) -> Self raise ModelError
 
 pub(all) enum ExecutionState {
   Succeeded
@@ -161,6 +169,7 @@ pub(all) enum PolicyReasonCode {
 pub(all) struct Reconciliation {
   plan : BatchedPlan
   state : ReconciliationState
+  observed_generation : Int
   decisions : Array[PolicyEvaluation]
   next_operation : Int
   results : Array[ExecutionResult]

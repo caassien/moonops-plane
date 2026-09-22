@@ -99,12 +99,14 @@ test "operation plan and execution result preserve model relationships" {
   let id = try! PlanId::new(value="plan-001")
   let plan = try! Plan::new(id~, operations=[operation], baseline_generation=1)
   let result = try! ExecutionResult::new(
+    plan_id=id,
     operation~,
     state=ExecutionState::Succeeded,
     message="applied",
   )
   assert_eq(plan.operations.length(), 1)
   assert_eq(plan.approval, ApprovalState::NotRequired)
+  assert_eq(result.plan_id, id)
   assert_eq(result.state, ExecutionState::Succeeded)
   assert_eq(result.operation, operation)
 }
