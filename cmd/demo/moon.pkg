@@ -1,0 +1,7 @@
+import {
+  "caassien/orbitops_plane",
+  "caassien/orbitops_plane/testing",
+  "moonbitlang/core/env",
+}
+
+pkgtype(kind: "executable")
