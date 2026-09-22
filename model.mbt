@@ -114,6 +114,7 @@ pub(all) enum ActionKind {
   Scale
   Restart
   Delete
+  Unknown
 } derive(Debug, Eq)
 
 ///|

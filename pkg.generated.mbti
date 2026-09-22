@@ -12,6 +12,10 @@ pub fn build_ordered_plan(id~ : PlanId, operations~ : Array[Operation], dependen
 
 pub fn compute_diff(DesiredState, ObservedState?) -> DiffResult raise ModelError
 
+pub fn evaluate_operation_safety(Operation, SafetyPolicy) -> PolicyEvaluation raise ModelError
+
+pub fn evaluate_safety_policy(ChangeBatch, SafetyPolicy) -> PolicyEvaluation raise ModelError
+
 pub fn validate_resource_dependencies(Array[ResourceId], Array[(ResourceId, ResourceId)]) -> Unit raise ModelError
 
 pub fn version() -> String
@@ -35,6 +39,7 @@ pub(all) enum ActionKind {
   Scale
   Restart
   Delete
+  Unknown
 } derive(Eq, @debug.Debug)
 
 pub(all) enum ApprovalState {
@@ -113,6 +118,30 @@ pub(all) struct PlanId {
 } derive(Eq, @debug.Debug)
 pub fn PlanId::new(value~ : String) -> Self raise ModelError
 
+pub(all) enum PolicyDecision {
+  Allow
+  Deny
+  RequireApproval
+} derive(Eq, @debug.Debug)
+
+pub(all) struct PolicyEvaluation {
+  decision : PolicyDecision
+  risk : RiskLevel
+  reason_code : PolicyReasonCode
+  explanation : String
+} derive(Eq, @debug.Debug)
+
+pub(all) enum PolicyReasonCode {
+  LowRisk
+  MediumRisk
+  HighRiskAction
+  DeleteProtection
+  BatchRestart
+  CriticalResource
+  BudgetConflict
+  UnknownAction
+} derive(Eq, @debug.Debug)
+
 pub(all) struct ResourceId {
   kind : String
   name : String
@@ -126,6 +155,20 @@ pub(all) struct ResourceSpec {
   enabled : Bool
 } derive(Eq, @debug.Debug)
 pub fn ResourceSpec::new(version~ : String, replicas~ : Int, config_fingerprint~ : String, enabled~ : Bool) -> Self raise ModelError
+
+pub(all) enum RiskLevel {
+  Low
+  Medium
+  High
+  Unknown
+} derive(Eq, @debug.Debug)
+
+pub(all) struct SafetyPolicy {
+  critical_resources : Array[ResourceId]
+  max_batch_operations : Int
+  max_affected_resources : Int
+} derive(Eq, @debug.Debug)
+pub fn SafetyPolicy::new(critical_resources~ : Array[ResourceId], max_batch_operations~ : Int, max_affected_resources~ : Int) -> Self raise ModelError
 
 // Type aliases
 
