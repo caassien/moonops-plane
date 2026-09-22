@@ -9,6 +9,8 @@ pub(all) suberror ModelError {
   DependencyCycle(String)
   DuplicateOperation(String)
   InvalidBudget(String)
+  InvalidTransition(String)
+  DuplicateFeedback(String)
 } derive(Debug, Eq)
 
 ///|

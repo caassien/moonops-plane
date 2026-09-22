@@ -6,7 +6,13 @@ import {
 }
 
 // Values
+pub fn apply_execution_result(Reconciliation, ExecutionResult) -> Reconciliation raise ModelError
+
+pub fn approve_reconciliation(Reconciliation) -> Reconciliation raise ModelError
+
 pub fn batch_plan(Plan, ChangeBudget) -> BatchedPlan raise ModelError
+
+pub fn begin_execution(Reconciliation) -> Reconciliation raise ModelError
 
 pub fn build_ordered_plan(id~ : PlanId, operations~ : Array[Operation], dependencies~ : Array[(ResourceId, ResourceId)], baseline_generation~ : Int) -> Plan raise ModelError
 
@@ -14,7 +20,15 @@ pub fn compute_diff(DesiredState, ObservedState?) -> DiffResult raise ModelError
 
 pub fn evaluate_operation_safety(Operation, SafetyPolicy) -> PolicyEvaluation raise ModelError
 
+pub fn evaluate_reconciliation(Reconciliation, SafetyPolicy) -> Reconciliation raise ModelError
+
 pub fn evaluate_safety_policy(ChangeBatch, SafetyPolicy) -> PolicyEvaluation raise ModelError
+
+pub fn reject_reconciliation(Reconciliation) -> Reconciliation raise ModelError
+
+pub fn start_reconciliation(BatchedPlan) -> Reconciliation
+
+pub fn terminate_reconciliation(Reconciliation) -> Reconciliation raise ModelError
 
 pub fn validate_resource_dependencies(Array[ResourceId], Array[(ResourceId, ResourceId)]) -> Unit raise ModelError
 
@@ -30,6 +44,8 @@ pub(all) suberror ModelError {
   DependencyCycle(String)
   DuplicateOperation(String)
   InvalidBudget(String)
+  InvalidTransition(String)
+  DuplicateFeedback(String)
 } derive(Eq, @debug.Debug)
 
 // Types and methods
@@ -140,6 +156,24 @@ pub(all) enum PolicyReasonCode {
   CriticalResource
   BudgetConflict
   UnknownAction
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Reconciliation {
+  plan : BatchedPlan
+  state : ReconciliationState
+  decisions : Array[PolicyEvaluation]
+  next_operation : Int
+  results : Array[ExecutionResult]
+} derive(Eq, @debug.Debug)
+
+pub(all) enum ReconciliationState {
+  Planning
+  AwaitingApproval
+  Ready
+  Executing
+  Succeeded
+  Failed
+  Terminated
 } derive(Eq, @debug.Debug)
 
 pub(all) struct ResourceId {
