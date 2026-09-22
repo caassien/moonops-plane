@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "caassien/moonops_plane/internal/graph"
+package "caassien/orbitops_plane/internal/graph"
 
 import {
   "moonbitlang/core/debug",

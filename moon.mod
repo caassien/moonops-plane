@@ -1,10 +1,10 @@
-name = "caassien/moonops_plane"
+name = "caassien/orbitops_plane"
 
 version = "0.1.0"
 
 readme = "README.md"
 
-repository = "https://github.com/caassien/moonops-plane"
+repository = "https://github.com/caassien/orbitops-plane"
 
 license = "Apache-2.0"
 

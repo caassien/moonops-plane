@@ -1,8 +1,8 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "caassien/moonops_plane/testing"
+package "caassien/orbitops_plane/testing"
 
 import {
-  "caassien/moonops_plane",
+  "caassien/orbitops_plane",
   "moonbitlang/core/debug",
 }
 
@@ -11,11 +11,11 @@ pub fn fixed_clock_start() -> Int
 
 pub fn fixed_executor(script~ : ExecutionScript) -> InMemoryExecutor
 
-pub fn fixed_plan_id() -> @moonops_plane.PlanId
+pub fn fixed_plan_id() -> @orbitops_plane.PlanId
 
-pub fn partial_failure_script(action~ : @moonops_plane.ActionKind) -> ExecutionScript
+pub fn partial_failure_script(action~ : @orbitops_plane.ActionKind) -> ExecutionScript
 
-pub fn rejection_script(action~ : @moonops_plane.ActionKind) -> ExecutionScript
+pub fn rejection_script(action~ : @orbitops_plane.ActionKind) -> ExecutionScript
 
 pub fn success_script() -> ExecutionScript
 
@@ -25,29 +25,29 @@ pub fn success_script() -> ExecutionScript
 pub(all) struct ExecutionRecord {
   sequence : Int
   timestamp : Int
-  result : @moonops_plane.ExecutionResult
+  result : @orbitops_plane.ExecutionResult
 } derive(Eq, @debug.Debug)
 
 pub(all) struct ExecutionRun {
-  plan_id : @moonops_plane.PlanId
+  plan_id : @orbitops_plane.PlanId
   records : Array[ExecutionRecord]
   stopped : Bool
 } derive(Eq, @debug.Debug)
-pub fn ExecutionRun::results(Self) -> Array[@moonops_plane.ExecutionResult]
+pub fn ExecutionRun::results(Self) -> Array[@orbitops_plane.ExecutionResult]
 
 pub(all) enum ExecutionScript {
   SucceedAll
-  RejectAction(@moonops_plane.ActionKind)
-  FailAction(@moonops_plane.ActionKind)
+  RejectAction(@orbitops_plane.ActionKind)
+  FailAction(@orbitops_plane.ActionKind)
 } derive(Eq, @debug.Debug)
 
 pub(all) struct InMemoryExecutor {
-  plan_id : @moonops_plane.PlanId
+  plan_id : @orbitops_plane.PlanId
   script : ExecutionScript
   clock_start : Int
 } derive(Eq, @debug.Debug)
-pub fn InMemoryExecutor::new(plan_id~ : @moonops_plane.PlanId, script~ : ExecutionScript, clock_start~ : Int) -> Self
-pub fn InMemoryExecutor::run(Self, Array[@moonops_plane.Operation]) -> ExecutionRun raise @moonops_plane.ModelError
+pub fn InMemoryExecutor::new(plan_id~ : @orbitops_plane.PlanId, script~ : ExecutionScript, clock_start~ : Int) -> Self
+pub fn InMemoryExecutor::run(Self, Array[@orbitops_plane.Operation]) -> ExecutionRun raise @orbitops_plane.ModelError
 
 // Type aliases
 

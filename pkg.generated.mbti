@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "caassien/moonops_plane"
+package "caassien/orbitops_plane"
 
 import {
   "moonbitlang/core/debug",

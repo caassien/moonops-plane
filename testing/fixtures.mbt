@@ -1,7 +1,7 @@
 ///|
 /// Stable plan identifier shared by deterministic examples.
-pub fn fixed_plan_id() -> @moonops_plane.PlanId {
-  { value: "moonops-fixed-plan", }
+pub fn fixed_plan_id() -> @orbitops_plane.PlanId {
+  { value: "orbitops-fixed-plan", }
 }
 
 ///|
@@ -18,14 +18,16 @@ pub fn success_script() -> ExecutionScript {
 
 ///|
 /// Script that rejects the first operation with the selected action.
-pub fn rejection_script(action~ : @moonops_plane.ActionKind) -> ExecutionScript {
+pub fn rejection_script(
+  action~ : @orbitops_plane.ActionKind,
+) -> ExecutionScript {
   ExecutionScript::RejectAction(action)
 }
 
 ///|
 /// Script that fails the first operation with the selected action.
 pub fn partial_failure_script(
-  action~ : @moonops_plane.ActionKind,
+  action~ : @orbitops_plane.ActionKind,
 ) -> ExecutionScript {
   ExecutionScript::FailAction(action)
 }

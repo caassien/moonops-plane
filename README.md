@@ -1,6 +1,6 @@
-# MoonOps Plane
+# OrbitOps Plane
 
-MoonOps Plane 是一个使用 MoonBit 构建的、可嵌入的智能运维控制面核心。调用方提供期望状态、观测状态、资源依赖和安全策略，控制面生成确定性的变更计划、审批要求与审计事件。
+OrbitOps Plane 是一个使用 MoonBit 构建的、可嵌入的智能运维控制面核心。调用方提供期望状态、观测状态、资源依赖和安全策略，控制面生成确定性的变更计划、审批要求与审计事件。
 
 项目将规划与执行解耦：核心负责差异识别、依赖排序、风险分级、变更预算和状态保护，SSH、Kubernetes、云 API 等真实副作用由宿主适配器执行。
 
@@ -24,6 +24,6 @@ MoonOps Plane 是一个使用 MoonBit 构建的、可嵌入的智能运维控制
 
 ## 项目信息
 
-- MoonBit 模块：`caassien/moonops_plane`
-- GitHub：<https://github.com/caassien/moonops-plane>
+- MoonBit 模块：`caassien/orbitops_plane`
+- GitHub：<https://github.com/caassien/orbitops-plane>
 - 许可证：Apache-2.0
