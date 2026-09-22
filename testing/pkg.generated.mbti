@@ -1,0 +1,54 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "caassien/moonops_plane/testing"
+
+import {
+  "caassien/moonops_plane",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn fixed_clock_start() -> Int
+
+pub fn fixed_executor(script~ : ExecutionScript) -> InMemoryExecutor
+
+pub fn fixed_plan_id() -> @moonops_plane.PlanId
+
+pub fn partial_failure_script(action~ : @moonops_plane.ActionKind) -> ExecutionScript
+
+pub fn rejection_script(action~ : @moonops_plane.ActionKind) -> ExecutionScript
+
+pub fn success_script() -> ExecutionScript
+
+// Errors
+
+// Types and methods
+pub(all) struct ExecutionRecord {
+  sequence : Int
+  timestamp : Int
+  result : @moonops_plane.ExecutionResult
+} derive(Eq, @debug.Debug)
+
+pub(all) struct ExecutionRun {
+  plan_id : @moonops_plane.PlanId
+  records : Array[ExecutionRecord]
+  stopped : Bool
+} derive(Eq, @debug.Debug)
+pub fn ExecutionRun::results(Self) -> Array[@moonops_plane.ExecutionResult]
+
+pub(all) enum ExecutionScript {
+  SucceedAll
+  RejectAction(@moonops_plane.ActionKind)
+  FailAction(@moonops_plane.ActionKind)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct InMemoryExecutor {
+  plan_id : @moonops_plane.PlanId
+  script : ExecutionScript
+  clock_start : Int
+} derive(Eq, @debug.Debug)
+pub fn InMemoryExecutor::new(plan_id~ : @moonops_plane.PlanId, script~ : ExecutionScript, clock_start~ : Int) -> Self
+pub fn InMemoryExecutor::run(Self, Array[@moonops_plane.Operation]) -> ExecutionRun raise @moonops_plane.ModelError
+
+// Type aliases
+
+// Traits
