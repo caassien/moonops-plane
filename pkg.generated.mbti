@@ -57,6 +57,9 @@ pub(all) suberror ModelError {
   PlanMismatch(String)
   InvalidAudit(String)
 } derive(Eq, @debug.Debug)
+pub fn ModelError::equal(Self, Self) -> Bool
+pub fn ModelError::not_equal(Self, Self) -> Bool
+pub fn ModelError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 pub(all) enum ActionKind {
@@ -67,6 +70,9 @@ pub(all) enum ActionKind {
   Delete
   Unknown
 } derive(Eq, @debug.Debug)
+pub fn ActionKind::equal(Self, Self) -> Bool
+pub fn ActionKind::not_equal(Self, Self) -> Bool
+pub fn ActionKind::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ApprovalState {
   NotRequired
@@ -74,6 +80,9 @@ pub(all) enum ApprovalState {
   Approved
   Rejected
 } derive(Eq, @debug.Debug)
+pub fn ApprovalState::equal(Self, Self) -> Bool
+pub fn ApprovalState::not_equal(Self, Self) -> Bool
+pub fn ApprovalState::to_repr(Self) -> @debug.Repr
 
 pub(all) struct AuditEvent {
   sequence : Int
@@ -88,7 +97,10 @@ pub(all) struct AuditEvent {
   explanation : String?
   execution_state : ExecutionState?
 } derive(Eq, @debug.Debug)
+pub fn AuditEvent::equal(Self, Self) -> Bool
 pub fn AuditEvent::new(sequence~ : Int, plan_id~ : PlanId, kind~ : AuditEventKind, reason_code~ : AuditReasonCode, state~ : ReconciliationState, batch_index~ : Int?, operation~ : AuditOperation?, policy_decision~ : PolicyDecision?, risk~ : RiskLevel?, explanation~ : String?, execution_state~ : ExecutionState?) -> Self raise ModelError
+pub fn AuditEvent::not_equal(Self, Self) -> Bool
+pub fn AuditEvent::to_repr(Self) -> @debug.Repr
 
 pub(all) enum AuditEventKind {
   PlanCreated
@@ -98,11 +110,17 @@ pub(all) enum AuditEventKind {
   ExecutionFeedback
   Terminal
 } derive(Eq, @debug.Debug)
+pub fn AuditEventKind::equal(Self, Self) -> Bool
+pub fn AuditEventKind::not_equal(Self, Self) -> Bool
+pub fn AuditEventKind::to_repr(Self) -> @debug.Repr
 
 pub(all) struct AuditOperation {
   resource : ResourceId
   action : ActionKind
 } derive(Eq, @debug.Debug)
+pub fn AuditOperation::equal(Self, Self) -> Bool
+pub fn AuditOperation::not_equal(Self, Self) -> Bool
+pub fn AuditOperation::to_repr(Self) -> @debug.Repr
 
 pub(all) enum AuditReasonCode {
   PlanCreated
@@ -119,34 +137,52 @@ pub(all) enum AuditReasonCode {
   ReconciliationFailed
   ReconciliationTerminated
 } derive(Eq, @debug.Debug)
+pub fn AuditReasonCode::equal(Self, Self) -> Bool
+pub fn AuditReasonCode::not_equal(Self, Self) -> Bool
+pub fn AuditReasonCode::to_repr(Self) -> @debug.Repr
 
 pub(all) struct BatchedPlan {
   plan : Plan
   batches : Array[ChangeBatch]
 } derive(Eq, @debug.Debug)
+pub fn BatchedPlan::equal(Self, Self) -> Bool
+pub fn BatchedPlan::not_equal(Self, Self) -> Bool
+pub fn BatchedPlan::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ChangeBatch {
   operations : Array[Operation]
 } derive(Eq, @debug.Debug)
+pub fn ChangeBatch::equal(Self, Self) -> Bool
+pub fn ChangeBatch::not_equal(Self, Self) -> Bool
+pub fn ChangeBatch::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ChangeBudget {
   max_parallel : Int
   max_affected_resources : Int
   isolate_high_risk : Bool
 } derive(Eq, @debug.Debug)
+pub fn ChangeBudget::equal(Self, Self) -> Bool
 pub fn ChangeBudget::new(max_parallel~ : Int, max_affected_resources~ : Int, isolate_high_risk~ : Bool) -> Self raise ModelError
+pub fn ChangeBudget::not_equal(Self, Self) -> Bool
+pub fn ChangeBudget::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesiredState {
   resource : ResourceId
   spec : ResourceSpec
   generation : Int
 } derive(Eq, @debug.Debug)
+pub fn DesiredState::equal(Self, Self) -> Bool
 pub fn DesiredState::new(resource~ : ResourceId, spec~ : ResourceSpec, generation~ : Int) -> Self raise ModelError
+pub fn DesiredState::not_equal(Self, Self) -> Bool
+pub fn DesiredState::to_repr(Self) -> @debug.Repr
 
 pub(all) enum DiffResult {
   NoChange
   Action(Operation)
 } derive(Eq, @debug.Debug)
+pub fn DiffResult::equal(Self, Self) -> Bool
+pub fn DiffResult::not_equal(Self, Self) -> Bool
+pub fn DiffResult::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ExecutionResult {
   plan_id : PlanId
@@ -154,13 +190,19 @@ pub(all) struct ExecutionResult {
   state : ExecutionState
   message : String
 } derive(Eq, @debug.Debug)
+pub fn ExecutionResult::equal(Self, Self) -> Bool
 pub fn ExecutionResult::new(plan_id~ : PlanId, operation~ : Operation, state~ : ExecutionState, message~ : String) -> Self raise ModelError
+pub fn ExecutionResult::not_equal(Self, Self) -> Bool
+pub fn ExecutionResult::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ExecutionState {
   Succeeded
   Failed
   Skipped
 } derive(Eq, @debug.Debug)
+pub fn ExecutionState::equal(Self, Self) -> Bool
+pub fn ExecutionState::not_equal(Self, Self) -> Bool
+pub fn ExecutionState::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ObservedState {
   resource : ResourceId
@@ -168,14 +210,20 @@ pub(all) struct ObservedState {
   generation : Int
   healthy : Bool
 } derive(Eq, @debug.Debug)
+pub fn ObservedState::equal(Self, Self) -> Bool
 pub fn ObservedState::new(resource~ : ResourceId, spec~ : ResourceSpec, generation~ : Int, healthy~ : Bool) -> Self raise ModelError
+pub fn ObservedState::not_equal(Self, Self) -> Bool
+pub fn ObservedState::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Operation {
   resource : ResourceId
   action : ActionKind
   reason : String
 } derive(Eq, @debug.Debug)
+pub fn Operation::equal(Self, Self) -> Bool
 pub fn Operation::new(resource~ : ResourceId, action~ : ActionKind, reason~ : String) -> Self raise ModelError
+pub fn Operation::not_equal(Self, Self) -> Bool
+pub fn Operation::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Plan {
   id : PlanId
@@ -183,18 +231,27 @@ pub(all) struct Plan {
   baseline_generation : Int
   approval : ApprovalState
 } derive(Eq, @debug.Debug)
+pub fn Plan::equal(Self, Self) -> Bool
 pub fn Plan::new(id~ : PlanId, operations~ : Array[Operation], baseline_generation~ : Int) -> Self raise ModelError
+pub fn Plan::not_equal(Self, Self) -> Bool
+pub fn Plan::to_repr(Self) -> @debug.Repr
 
 pub(all) struct PlanId {
   value : String
 } derive(Eq, @debug.Debug)
+pub fn PlanId::equal(Self, Self) -> Bool
 pub fn PlanId::new(value~ : String) -> Self raise ModelError
+pub fn PlanId::not_equal(Self, Self) -> Bool
+pub fn PlanId::to_repr(Self) -> @debug.Repr
 
 pub(all) enum PolicyDecision {
   Allow
   Deny
   RequireApproval
 } derive(Eq, @debug.Debug)
+pub fn PolicyDecision::equal(Self, Self) -> Bool
+pub fn PolicyDecision::not_equal(Self, Self) -> Bool
+pub fn PolicyDecision::to_repr(Self) -> @debug.Repr
 
 pub(all) struct PolicyEvaluation {
   decision : PolicyDecision
@@ -202,6 +259,9 @@ pub(all) struct PolicyEvaluation {
   reason_code : PolicyReasonCode
   explanation : String
 } derive(Eq, @debug.Debug)
+pub fn PolicyEvaluation::equal(Self, Self) -> Bool
+pub fn PolicyEvaluation::not_equal(Self, Self) -> Bool
+pub fn PolicyEvaluation::to_repr(Self) -> @debug.Repr
 
 pub(all) enum PolicyReasonCode {
   LowRisk
@@ -213,6 +273,9 @@ pub(all) enum PolicyReasonCode {
   BudgetConflict
   UnknownAction
 } derive(Eq, @debug.Debug)
+pub fn PolicyReasonCode::equal(Self, Self) -> Bool
+pub fn PolicyReasonCode::not_equal(Self, Self) -> Bool
+pub fn PolicyReasonCode::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Reconciliation {
   plan : BatchedPlan
@@ -223,6 +286,9 @@ pub(all) struct Reconciliation {
   next_operation : Int
   results : Array[ExecutionResult]
 } derive(Eq, @debug.Debug)
+pub fn Reconciliation::equal(Self, Self) -> Bool
+pub fn Reconciliation::not_equal(Self, Self) -> Bool
+pub fn Reconciliation::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ReconciliationState {
   Planning
@@ -233,12 +299,18 @@ pub(all) enum ReconciliationState {
   Failed
   Terminated
 } derive(Eq, @debug.Debug)
+pub fn ReconciliationState::equal(Self, Self) -> Bool
+pub fn ReconciliationState::not_equal(Self, Self) -> Bool
+pub fn ReconciliationState::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ResourceId {
   kind : String
   name : String
 } derive(Eq, @debug.Debug)
+pub fn ResourceId::equal(Self, Self) -> Bool
 pub fn ResourceId::new(kind~ : String, name~ : String) -> Self raise ModelError
+pub fn ResourceId::not_equal(Self, Self) -> Bool
+pub fn ResourceId::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ResourceSpec {
   version : String
@@ -246,7 +318,10 @@ pub(all) struct ResourceSpec {
   config_fingerprint : String
   enabled : Bool
 } derive(Eq, @debug.Debug)
+pub fn ResourceSpec::equal(Self, Self) -> Bool
 pub fn ResourceSpec::new(version~ : String, replicas~ : Int, config_fingerprint~ : String, enabled~ : Bool) -> Self raise ModelError
+pub fn ResourceSpec::not_equal(Self, Self) -> Bool
+pub fn ResourceSpec::to_repr(Self) -> @debug.Repr
 
 pub(all) enum RiskLevel {
   Low
@@ -254,13 +329,19 @@ pub(all) enum RiskLevel {
   High
   Unknown
 } derive(Eq, @debug.Debug)
+pub fn RiskLevel::equal(Self, Self) -> Bool
+pub fn RiskLevel::not_equal(Self, Self) -> Bool
+pub fn RiskLevel::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SafetyPolicy {
   critical_resources : Array[ResourceId]
   max_batch_operations : Int
   max_affected_resources : Int
 } derive(Eq, @debug.Debug)
+pub fn SafetyPolicy::equal(Self, Self) -> Bool
 pub fn SafetyPolicy::new(critical_resources~ : Array[ResourceId], max_batch_operations~ : Int, max_affected_resources~ : Int) -> Self raise ModelError
+pub fn SafetyPolicy::not_equal(Self, Self) -> Bool
+pub fn SafetyPolicy::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

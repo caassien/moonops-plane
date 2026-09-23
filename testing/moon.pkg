@@ -1,3 +1,4 @@
 import {
   "caassien/orbitops_plane",
+  "moonbitlang/core/debug",
 }

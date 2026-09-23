@@ -10,6 +10,13 @@ pub(all) suberror GraphError {
 } derive(Debug, Eq)
 
 ///|
+/// Make derived trait methods explicit for newer MoonBit toolchains.
+pub extend GraphError with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend GraphError with Eq::{not_equal, equal}
+
+///|
 fn node_index(nodes : Array[String], value : String) -> Int? {
   let mut result : Int? = None
   for i, node in nodes {

@@ -27,27 +27,39 @@ pub(all) struct ExecutionRecord {
   timestamp : Int
   result : @orbitops_plane.ExecutionResult
 } derive(Eq, @debug.Debug)
+pub fn ExecutionRecord::equal(Self, Self) -> Bool
+pub fn ExecutionRecord::not_equal(Self, Self) -> Bool
+pub fn ExecutionRecord::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ExecutionRun {
   plan_id : @orbitops_plane.PlanId
   records : Array[ExecutionRecord]
   stopped : Bool
 } derive(Eq, @debug.Debug)
+pub fn ExecutionRun::equal(Self, Self) -> Bool
+pub fn ExecutionRun::not_equal(Self, Self) -> Bool
 pub fn ExecutionRun::results(Self) -> Array[@orbitops_plane.ExecutionResult]
+pub fn ExecutionRun::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ExecutionScript {
   SucceedAll
   RejectAction(@orbitops_plane.ActionKind)
   FailAction(@orbitops_plane.ActionKind)
 } derive(Eq, @debug.Debug)
+pub fn ExecutionScript::equal(Self, Self) -> Bool
+pub fn ExecutionScript::not_equal(Self, Self) -> Bool
+pub fn ExecutionScript::to_repr(Self) -> @debug.Repr
 
 pub(all) struct InMemoryExecutor {
   plan_id : @orbitops_plane.PlanId
   script : ExecutionScript
   clock_start : Int
 } derive(Eq, @debug.Debug)
+pub fn InMemoryExecutor::equal(Self, Self) -> Bool
 pub fn InMemoryExecutor::new(plan_id~ : @orbitops_plane.PlanId, script~ : ExecutionScript, clock_start~ : Int) -> Self
+pub fn InMemoryExecutor::not_equal(Self, Self) -> Bool
 pub fn InMemoryExecutor::run(Self, Array[@orbitops_plane.Operation]) -> ExecutionRun raise @orbitops_plane.ModelError
+pub fn InMemoryExecutor::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 
