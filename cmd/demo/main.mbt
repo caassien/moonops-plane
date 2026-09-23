@@ -1,11 +1,14 @@
 ///|
 fn main {
   let args = @env.args()
-  let rollout_requested = args.length() > 0 &&
-    args[args.length() - 1] == "rollout"
-  if args.length() <= 1 || rollout_requested {
+  let command = if args.length() == 0 { "" } else { args[args.length() - 1] }
+  if command == "drift" {
+    run_drift()
+  } else if command == "incident" {
+    run_incident()
+  } else if args.length() <= 1 || command == "rollout" {
     run_rollout()
   } else {
-    println("Usage: moon run cmd/demo -- rollout")
+    println("Usage: moon run cmd/demo -- <rollout|drift|incident>")
   }
 }
