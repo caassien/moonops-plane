@@ -34,6 +34,19 @@ moon run cmd/demo -- incident
 
 `rollout` 按“数据库迁移 → API 更新 → Worker 扩容”的依赖顺序生成计划，使用单资源批次和内存执行器完成一次无副作用调和；`drift` 展示自动允许的配置修复以及过期观测拒绝；`incident` 展示高风险审批和指定动作失败后的停止。三个场景都会打印策略决定、执行反馈和审计事件，并使用固定计划标识和固定时钟保持输出可重复。
 
+## 本地质量检查
+
+CI 会在推送到 `main`、针对 `main` 创建或更新 Pull Request 时执行以下门禁；提交前可在仓库根目录复现：
+
+```bash
+moon fmt --check
+moon info
+git diff --exit-code
+moon check --target all --deny-warn
+moon build --target all --deny-warn
+moon test --target all --deny-warn
+```
+
 ## 项目信息
 
 - MoonBit 模块：`caassien/orbitops_plane`
