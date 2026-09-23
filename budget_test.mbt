@@ -2,22 +2,24 @@
 fn budget_resource(
   kind~ : String,
   name~ : String,
-) -> ResourceId raise ModelError {
-  ResourceId::new(kind~, name~)
+) -> @orbitops_plane.ResourceId raise @orbitops_plane.ModelError {
+  @orbitops_plane.ResourceId::new(kind~, name~)
 }
 
 ///|
 fn budget_operation(
-  resource : ResourceId,
-  action : ActionKind,
-) -> Operation raise ModelError {
-  Operation::new(resource~, action~, reason="budget test")
+  resource : @orbitops_plane.ResourceId,
+  action : @orbitops_plane.ActionKind,
+) -> @orbitops_plane.Operation raise @orbitops_plane.ModelError {
+  @orbitops_plane.Operation::new(resource~, action~, reason="budget test")
 }
 
 ///|
-fn budget_plan(operations : Array[Operation]) -> Plan raise ModelError {
-  let id = PlanId::new(value="budget-plan")
-  Plan::new(id~, operations~, baseline_generation=1)
+fn budget_plan(
+  operations : Array[@orbitops_plane.Operation],
+) -> @orbitops_plane.Plan raise @orbitops_plane.ModelError {
+  let id = @orbitops_plane.PlanId::new(value="budget-plan")
+  @orbitops_plane.Plan::new(id~, operations~, baseline_generation=1)
 }
 
 ///|
@@ -25,12 +27,19 @@ fn budget(
   max_parallel~ : Int,
   max_affected_resources~ : Int,
   isolate_high_risk~ : Bool,
-) -> ChangeBudget raise ModelError {
-  ChangeBudget::new(max_parallel~, max_affected_resources~, isolate_high_risk~)
+) -> @orbitops_plane.ChangeBudget raise @orbitops_plane.ModelError {
+  @orbitops_plane.ChangeBudget::new(
+    max_parallel~,
+    max_affected_resources~,
+    isolate_high_risk~,
+  )
 }
 
 ///|
-fn assert_batch_sizes(plan : BatchedPlan, expected : Array[Int]) -> Unit raise {
+fn assert_batch_sizes(
+  plan : @orbitops_plane.BatchedPlan,
+  expected : Array[Int],
+) -> Unit raise {
   assert_eq(plan.batches.length(), expected.length())
   for i in 0..<expected.length() {
     assert_eq(plan.batches[i].operations.length(), expected[i])
@@ -43,12 +52,12 @@ test "parallel and resource limits split normal operations" {
   let worker = try! budget_resource(kind="service", name="worker")
   let database = try! budget_resource(kind="database", name="primary")
   let operations = [
-    try! budget_operation(api, ActionKind::Update),
-    try! budget_operation(worker, ActionKind::Update),
-    try! budget_operation(database, ActionKind::Update),
+    try! budget_operation(api, @orbitops_plane.ActionKind::Update),
+    try! budget_operation(worker, @orbitops_plane.ActionKind::Update),
+    try! budget_operation(database, @orbitops_plane.ActionKind::Update),
   ]
   let plan = try! budget_plan(operations)
-  let result = try! batch_plan(
+  let result = try! @orbitops_plane.batch_plan(
     plan,
     try! budget(
       max_parallel=2,
@@ -66,10 +75,10 @@ test "resource limit splits before a new resource exceeds the budget" {
   let api = try! budget_resource(kind="service", name="api")
   let worker = try! budget_resource(kind="service", name="worker")
   let operations = [
-    try! budget_operation(api, ActionKind::Scale),
-    try! budget_operation(worker, ActionKind::Scale),
+    try! budget_operation(api, @orbitops_plane.ActionKind::Scale),
+    try! budget_operation(worker, @orbitops_plane.ActionKind::Scale),
   ]
-  let result = try! batch_plan(
+  let result = try! @orbitops_plane.batch_plan(
     try! budget_plan(operations),
     try! budget(
       max_parallel=3,
@@ -86,11 +95,11 @@ test "high risk operations are isolated" {
   let worker = try! budget_resource(kind="service", name="worker")
   let database = try! budget_resource(kind="database", name="primary")
   let operations = [
-    try! budget_operation(api, ActionKind::Update),
-    try! budget_operation(worker, ActionKind::Restart),
-    try! budget_operation(database, ActionKind::Update),
+    try! budget_operation(api, @orbitops_plane.ActionKind::Update),
+    try! budget_operation(worker, @orbitops_plane.ActionKind::Restart),
+    try! budget_operation(database, @orbitops_plane.ActionKind::Update),
   ]
-  let result = try! batch_plan(
+  let result = try! @orbitops_plane.batch_plan(
     try! budget_plan(operations),
     try! budget(
       max_parallel=3,
@@ -107,10 +116,10 @@ test "delete operations are isolated when requested" {
   let api = try! budget_resource(kind="service", name="api")
   let worker = try! budget_resource(kind="service", name="worker")
   let operations = [
-    try! budget_operation(api, ActionKind::Delete),
-    try! budget_operation(worker, ActionKind::Update),
+    try! budget_operation(api, @orbitops_plane.ActionKind::Delete),
+    try! budget_operation(worker, @orbitops_plane.ActionKind::Update),
   ]
-  let result = try! batch_plan(
+  let result = try! @orbitops_plane.batch_plan(
     try! budget_plan(operations),
     try! budget(
       max_parallel=2,
@@ -123,7 +132,7 @@ test "delete operations are isolated when requested" {
 
 ///|
 test "empty plan produces no batches" {
-  let result = try! batch_plan(
+  let result = try! @orbitops_plane.batch_plan(
     try! budget_plan([]),
     try! budget(
       max_parallel=2,
@@ -137,26 +146,26 @@ test "empty plan produces no batches" {
 ///|
 test "non-positive budgets return diagnostics" {
   try
-    ChangeBudget::new(
+    @orbitops_plane.ChangeBudget::new(
       max_parallel=0,
       max_affected_resources=1,
       isolate_high_risk=false,
     )
   catch {
-    ModelError::InvalidBudget(message) =>
+    @orbitops_plane.ModelError::InvalidBudget(message) =>
       inspect(message, content="max_parallel must be positive")
     _ => fail("wrong budget error")
   } noraise {
     _ => fail("expected an invalid parallel budget")
   }
   try
-    ChangeBudget::new(
+    @orbitops_plane.ChangeBudget::new(
       max_parallel=1,
       max_affected_resources=0,
       isolate_high_risk=false,
     )
   catch {
-    ModelError::InvalidBudget(message) =>
+    @orbitops_plane.ModelError::InvalidBudget(message) =>
       inspect(message, content="max_affected_resources must be positive")
     _ => fail("wrong budget error")
   } noraise {
