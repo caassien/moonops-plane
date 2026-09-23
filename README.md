@@ -22,6 +22,22 @@ OrbitOps Plane 是一个使用 MoonBit 构建的、可嵌入的智能运维控�
 
 首个版本专注无副作用的控制面内核和模拟执行器，不实现监控平台、远程 Agent、SSH/Kubernetes 客户端、Web 管理后台或大模型自动执行。真实凭据、网络隔离和平台级回滚由宿主负责。
 
+## 安装与使用
+
+需要先安装 MoonBit 工具链。源码复现方式：
+
+```bash
+git clone https://github.com/caassien/orbitops-plane.git
+cd orbitops-plane
+moon check --target all --deny-warn
+```
+
+发布到 Mooncakes 后，其他 MoonBit 项目可以通过模块名添加依赖：
+
+```bash
+moon add caassien/orbitops_plane
+```
+
 ## 依赖感知发布演示
 
 在仓库根目录运行：
@@ -52,6 +68,10 @@ moon publish --dry-run
 ```
 
 `moon publish --dry-run` 需要先登录 Mooncakes，只检查待发布包内容；正式发布需在确认 GitHub `main` 分支和版本标签后执行。
+
+## 开源与来源
+
+本项目是原创 MoonBit 实现，不移植或复制第三方项目；项目以 Apache-2.0 许可证发布。
 
 ## 本地质量检查
 
