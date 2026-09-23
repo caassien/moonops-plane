@@ -34,6 +34,25 @@ moon run cmd/demo -- incident
 
 `rollout` 按“数据库迁移 → API 更新 → Worker 扩容”的依赖顺序生成计划，使用单资源批次和内存执行器完成一次无副作用调和；`drift` 展示自动允许的配置修复以及过期观测拒绝；`incident` 展示高风险审批和指定动作失败后的停止。三个场景都会打印策略决定、执行反馈和审计事件，并使用固定计划标识和固定时钟保持输出可重复。
 
+## 0.1.0 发布准备
+
+当前模块版本为 `0.1.0`，公开接口摘要由 `moon info` 生成并纳入版本控制。本版本覆盖确定性差异计算、依赖排序与循环依赖拒绝、变更预算、安全策略、调和生命周期、过期状态保护、可回放审计，以及内存执行器和三个端到端演示场景。
+
+发布前可在仓库根目录运行：
+
+```bash
+moon fmt
+moon info
+git diff --exit-code
+moon check --target all --deny-warn
+moon build --target all --deny-warn
+moon test --target all --deny-warn
+# 需先登录 Mooncakes
+moon publish --dry-run
+```
+
+`moon publish --dry-run` 需要先登录 Mooncakes，只检查待发布包内容；正式发布需在确认 GitHub `main` 分支和版本标签后执行。
+
 ## 本地质量检查
 
 CI 会在推送到 `main`、针对 `main` 创建或更新 Pull Request 时执行以下门禁；提交前可在仓库根目录复现：
